@@ -13,7 +13,6 @@ import {
   MessageCircle,
   Phone,
   ShieldCheck,
-  Sparkles,
   UserRoundCheck,
 } from "lucide-react";
 
@@ -101,6 +100,8 @@ const propertyTypes: PropertyType[] = [
     prices: { "1 BHK": 6999, "2 BHK": 9999, "3 BHK": 16499, "4 BHK": 19499, "5 BHK": 22999 },
   },
 ];
+
+const DEFAULT_PROPERTY_TYPE = propertyTypes[0]!;
 
 const bhkOptions = ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "5 BHK"];
 
@@ -243,12 +244,28 @@ function trackClick(action: string, detail: Record<string, unknown> = {}) {
   window.dispatchEvent(new CustomEvent("cleaning:conversion", { detail: { action, search: window.location.search, ...detail } }));
 }
 
-function BookingLink({ className = "", label = "Book on WhatsApp" }: { className?: string; label?: string }) {
+function BookingLink({
+  className = "",
+  label = "Book on WhatsApp",
+  shine = false,
+  onClick,
+}: {
+  className?: string;
+  label?: string;
+  shine?: boolean;
+  onClick: () => void;
+}) {
   return (
-    <Button asChild size="lg" className={className}>
-      <a href="#contact" data-track="whatsapp_click" onClick={() => trackClick("whatsapp_click")}>
-        <MessageCircle aria-hidden="true" /> {label}
-      </a>
+    <Button
+      type="button"
+      size="lg"
+      className={shine ? `bg-foreground text-background hover:bg-foreground/88 ${className}` : className}
+      onClick={() => {
+        trackClick("whatsapp_click");
+        onClick();
+      }}
+    >
+      <MessageCircle aria-hidden="true" /> <span className={shine ? "text-shine" : ""}>{label}</span>
     </Button>
   );
 }
@@ -296,8 +313,8 @@ function CountUpStat({ value, suffix, label }: { value: number; suffix: string; 
   }, [value]);
 
   return (
-    <div ref={ref} className="py-5 pr-3 md:py-7 md:pl-6">
-      <p className="text-2xl font-extrabold tabular-nums text-primary md:text-3xl">
+    <div ref={ref} className="py-2 text-center">
+      <p className="text-2xl font-extrabold tabular-nums text-background md:text-3xl">
         {display.toLocaleString("en-IN")}
         {suffix}
       </p>
@@ -308,14 +325,9 @@ function CountUpStat({ value, suffix, label }: { value: number; suffix: string; 
 
 function HeroStats() {
   return (
-    <div className="grid grid-cols-2 border-t border-background/20 md:grid-cols-4">
-      {heroStats.map((stat, index) => (
-        <div
-          key={stat.label}
-          className={`${index % 2 ? "border-l" : ""} ${index > 1 ? "border-t md:border-t-0" : ""} border-background/20 md:border-l md:first:border-l-0`}
-        >
-          <CountUpStat {...stat} />
-        </div>
+    <div className="grid grid-cols-2 gap-y-4 md:grid-cols-4">
+      {heroStats.map((stat) => (
+        <CountUpStat key={stat.label} {...stat} />
       ))}
     </div>
   );
@@ -390,14 +402,15 @@ function PropertyCarousel({
 }
 
 function PropertyBookingDialog({
-  type,
+  initialType,
   open,
   onOpenChange,
 }: {
-  type: PropertyType | null;
+  initialType: PropertyType | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [propertyId, setPropertyId] = useState(DEFAULT_PROPERTY_TYPE.id);
   const [bhk, setBhk] = useState<string | null>(null);
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -408,6 +421,14 @@ function PropertyBookingDialog({
     return d;
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    setPropertyId(initialType?.id ?? DEFAULT_PROPERTY_TYPE.id);
+    setBhk(null);
+    setDate(undefined);
+    setCalendarOpen(false);
+  }, [open, initialType]);
+
   const resetAndClose = () => {
     setBhk(null);
     setDate(undefined);
@@ -415,8 +436,7 @@ function PropertyBookingDialog({
     onOpenChange(false);
   };
 
-  if (!type) return null;
-
+  const type = propertyTypes.find((t) => t.id === propertyId) ?? DEFAULT_PROPERTY_TYPE;
   const price = bhk ? type.prices[bhk] : null;
   const canSubmit = Boolean(bhk && date);
   const dateLabel = date?.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) ?? "";
@@ -449,7 +469,26 @@ function PropertyBookingDialog({
           </DialogHeader>
 
           <div className="mt-4">
-            <p className="text-xs font-bold uppercase text-muted-foreground">1. Home size</p>
+            <p className="text-xs font-bold uppercase text-muted-foreground">1. Property type</p>
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+              {propertyTypes.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setPropertyId(option.id)}
+                  className={`rounded-lg border px-3 py-2 text-xs font-bold uppercase transition-colors sm:text-sm ${propertyId === option.id
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border text-foreground hover:border-foreground"
+                    }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-xs font-bold uppercase text-muted-foreground">2. Home size</p>
             <div className="mt-2 grid grid-cols-5 gap-1.5">
               {bhkOptions.map((option) => (
                 <button
@@ -457,8 +496,8 @@ function PropertyBookingDialog({
                   type="button"
                   onClick={() => setBhk(option)}
                   className={`rounded-lg border py-2 text-xs font-bold uppercase transition-colors sm:text-sm ${bhk === option
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border text-foreground hover:border-foreground"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border text-foreground hover:border-foreground"
                     }`}
                 >
                   {option.replace(" BHK", "")}
@@ -468,7 +507,7 @@ function PropertyBookingDialog({
           </div>
 
           <div className="mt-4">
-            <p className="text-xs font-bold uppercase text-muted-foreground">2. Pick a date</p>
+            <p className="text-xs font-bold uppercase text-muted-foreground">3. Pick a date</p>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <button
@@ -583,6 +622,73 @@ function ServiceRail({ services }: { services: { title: string; blurb: string; p
   );
 }
 
+function PricingCarousel({
+  types,
+  onSelect,
+}: {
+  types: PropertyType[];
+  onSelect: (type: PropertyType) => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+
+  useEffect(() => {
+    if (!api) return;
+    const timer = window.setInterval(() => {
+      api.scrollNext();
+    }, 5000);
+    const stop = () => window.clearInterval(timer);
+    api.on("pointerDown", stop);
+    return () => {
+      window.clearInterval(timer);
+      api.off("pointerDown", stop);
+    };
+  }, [api]);
+
+  return (
+    <section id="pricing" className="relative bg-secondary text-secondary-foreground">
+      <Carousel setApi={setApi} opts={{ loop: true }} className="w-full">
+        <CarouselContent className="ml-0">
+          {types.map((type, index) => {
+            const minPrice = Math.min(...Object.values(type.prices));
+            return (
+              <CarouselItem key={type.id} className="pl-0">
+                <button
+                  type="button"
+                  onClick={() => onSelect(type)}
+                  className="group relative block h-[560px] w-full overflow-hidden text-left md:h-[680px]"
+                >
+                  <img
+                    src={type.image}
+                    alt={type.label}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    width={1600}
+                    height={1008}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                  />
+                  <div className="absolute inset-0 bg-secondary/60" />
+                  <div className="relative mx-auto flex h-full max-w-[1440px] flex-col items-center justify-center px-5 py-16 text-center md:px-10 lg:px-16">
+                    <span className="text-xs font-bold uppercase text-background/70">{type.tag}</span>
+                    <h3 className="mt-3 max-w-2xl text-5xl font-extrabold leading-[0.98] md:text-7xl">{type.label}</h3>
+                    <p className="mt-5 max-w-lg text-base leading-7 text-secondary-foreground/75 md:text-lg">{type.blurb}</p>
+                    <p className="mt-7 flex items-center gap-2 text-2xl font-extrabold md:text-3xl">
+                      <span className="text-shine">From {formatInr(minPrice)}</span>
+                      <ArrowRight className="size-6 text-background transition-transform group-hover:translate-x-1" />
+                    </p>
+                  </div>
+                </button>
+              </CarouselItem>
+            );
+          })}
+        </CarouselContent>
+        <div className="absolute inset-x-0 bottom-8 flex justify-center gap-2 px-5 md:justify-end md:px-10 lg:px-16">
+          <CarouselPrevious variant="ghost" className="static size-11 translate-y-0 rounded-none border-none bg-transparent text-background hover:bg-background/10 hover:text-background" />
+          <CarouselNext variant="ghost" className="static size-11 translate-y-0 rounded-none border-none bg-transparent text-background hover:bg-background/10 hover:text-background" />
+        </div>
+      </Carousel>
+    </section>
+  );
+}
+
 function TestimonialsSection() {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
@@ -619,7 +725,7 @@ function TestimonialsSection() {
               Happy customers.
             </h2>
             <p className="mt-6 max-w-md text-sm leading-6 text-muted-foreground">
-              From apartments in Ahmedabad to homes across Gandhinagar, our customers trust Clean &amp; Care for
+              From apartments in Ahmedabad, our customers trust Clean &amp; Care for
               detailed, professional home cleaning.
             </p>
             <a
@@ -639,7 +745,7 @@ function TestimonialsSection() {
                     <span aria-hidden="true" className="text-6xl font-extrabold leading-none text-primary/25 md:text-7xl">
                       “
                     </span>
-                    <p className="mt-4 min-h-[9rem] max-w-xl text-xl font-medium leading-8 text-foreground md:min-h-[7.5rem] md:text-2xl md:leading-9">
+                    <p className="mt-4 max-w-xl break-words text-base font-medium leading-7 text-foreground sm:text-lg sm:leading-8 md:text-2xl md:leading-9">
                       {review.quote}
                     </p>
                     <div className="mt-8">
@@ -681,14 +787,19 @@ function TestimonialsSection() {
 
 function HomePage() {
   const [selectedType, setSelectedType] = useState<PropertyType | null>(null);
+  const [bookingOpen, setBookingOpen] = useState(false);
+
+  const openBooking = (type: PropertyType | null = null) => {
+    setSelectedType(type);
+    setBookingOpen(true);
+  };
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <header className="absolute inset-x-0 top-0 z-30 text-background">
         <div className="mx-auto grid h-20 max-w-[1440px] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 md:h-24 md:px-10 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:px-16">
-          <a href="#top" className="flex min-w-0 items-center gap-3" aria-label="Home Cleaning Ahmedabad home">
-            <span className="grid size-9 shrink-0 place-items-center rounded-sm bg-primary text-primary-foreground"><Sparkles className="size-5" /></span>
-            <span className="truncate text-sm font-extrabold uppercase leading-tight">Home Cleaning<br /><span className="font-medium text-background/70">Ahmedabad</span></span>
+          <a href="#top" className="flex min-w-0 items-center" aria-label="Clean & Care home">
+            <span className="truncate text-lg font-extrabold uppercase tracking-tight">Clean &amp; Care</span>
           </a>
           <nav className="hidden items-center gap-7 text-sm font-semibold lg:flex" aria-label="Main navigation">
             <a className="transition-colors hover:text-primary" href="#services">Services</a>
@@ -697,7 +808,7 @@ function HomePage() {
             <a className="transition-colors hover:text-primary" href="#about">Why us</a>
             <a className="transition-colors hover:text-primary" href="#contact">Contact</a>
           </nav>
-          <BookingLink className="hidden md:inline-flex" />
+          <BookingLink className="hidden md:inline-flex" onClick={() => openBooking()} />
           <a href="#pricing" className="flex size-10 items-center justify-center border border-background/40 md:hidden" aria-label="View pricing"><ArrowDownRight /></a>
         </div>
       </header>
@@ -708,11 +819,11 @@ function HomePage() {
           <div className="absolute inset-0 bg-secondary/65" />
           <div className="relative mx-auto flex min-h-[780px] max-w-[1440px] flex-col justify-end px-5 pb-10 pt-32 md:min-h-[860px] md:px-10 md:pb-14 lg:px-16">
             <div className="max-w-3xl">
-              <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase text-primary"><MapPin className="size-4" /> Home cleaning in Ahmedabad</p>
+              <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase text-background/80"><MapPin className="size-4" /> Home cleaning in Ahmedabad</p>
               <h1 className="max-w-3xl text-5xl font-extrabold leading-[0.98] md:text-7xl lg:text-[5.8rem]">A cleaner home.<br />Without the hassle.</h1>
               <p className="mt-6 max-w-xl text-base font-medium leading-7 text-secondary-foreground/75 md:text-lg">Professional deep cleaning for flats, apartments and bungalows across Ahmedabad — delivered at your home by our cleaning team.</p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <BookingLink />
+                <BookingLink shine onClick={() => openBooking()} />
                 <Button asChild size="lg" variant="outline" className="border-secondary-foreground/45 text-secondary-foreground hover:bg-background hover:text-foreground">
                   <a href="#contact" data-track="phone_click" onClick={() => trackClick("phone_click")}><Phone /> Call now</a>
                 </Button>
@@ -726,45 +837,7 @@ function HomePage() {
 
         <KeyFeaturesStrip />
 
-        <section id="pricing" className="relative bg-secondary text-secondary-foreground">
-          <Carousel opts={{ loop: true }} className="w-full">
-            <CarouselContent className="ml-0">
-              {propertyTypes.map((type, index) => {
-                const minPrice = Math.min(...Object.values(type.prices));
-                return (
-                  <CarouselItem key={type.id} className="pl-0">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedType(type)}
-                      className="group relative block h-[560px] w-full overflow-hidden text-left md:h-[680px]"
-                    >
-                      <img
-                        src={type.image}
-                        alt={type.label}
-                        loading={index === 0 ? "eager" : "lazy"}
-                        width={1600}
-                        height={1008}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                      />
-                      <div className="absolute inset-0 bg-secondary/60" />
-                      <div className="relative mx-auto flex h-full max-w-[1440px] flex-col items-center justify-end px-5 pb-16 pt-28 text-center md:px-10 lg:px-16">
-                        <span className="text-xs font-bold uppercase text-primary">{type.tag}</span>
-                        <h3 className="mt-3 max-w-2xl text-5xl font-extrabold leading-[0.98] md:text-7xl">{type.label}</h3>
-                        <p className="mt-5 max-w-lg text-base leading-7 text-secondary-foreground/75 md:text-lg">{type.blurb}</p>
-                        <p className="mt-7 flex items-center gap-2 text-2xl font-extrabold text-primary md:text-3xl">
-                          From {formatInr(minPrice)}
-                          <ArrowRight className="size-6 transition-transform group-hover:translate-x-1" />
-                        </p>
-                      </div>
-                    </button>
-                  </CarouselItem>
-                );
-              })}
-            </CarouselContent>
-            <CarouselPrevious className="static absolute left-5 top-1/2 size-11 -translate-y-1/2 translate-x-0 border-none bg-transparent text-background hover:bg-transparent hover:text-primary md:left-10 lg:left-16" />
-            <CarouselNext className="static absolute right-5 top-1/2 size-11 -translate-y-1/2 translate-x-0 border-none bg-transparent text-background hover:bg-transparent hover:text-primary md:right-10 lg:right-16" />
-          </Carousel>
-        </section>
+        <PricingCarousel types={propertyTypes} onSelect={openBooking} />
 
         <TestimonialsSection />
 
@@ -779,17 +852,15 @@ function HomePage() {
             </div>
             <PropertyCarousel
               types={propertyTypes}
-              onSelect={(type) => setSelectedType(type)}
+              onSelect={(type) => openBooking(type)}
             />
           </div>
         </section>
 
         <PropertyBookingDialog
-          type={selectedType}
-          open={selectedType !== null}
-          onOpenChange={(next) => {
-            if (!next) setSelectedType(null);
-          }}
+          initialType={selectedType}
+          open={bookingOpen}
+          onOpenChange={setBookingOpen}
         />
 
         <section id="services" className="bg-muted py-20 md:py-28">
@@ -810,7 +881,7 @@ function HomePage() {
         <section className="py-20 md:py-28">
           <div className="mx-auto max-w-[1312px] px-5 md:px-10 lg:px-16">
             <div className="grid gap-10 lg:grid-cols-2 lg:gap-20">
-              <div><p className="text-xs font-bold uppercase text-primary">Flat deep cleaning</p><h2 className="mt-4 text-4xl font-extrabold leading-tight md:text-6xl">Made for your apartment.</h2><p className="mt-6 max-w-lg text-lg leading-8 text-muted-foreground">The team handles complete home deep cleaning across bedrooms, living rooms, kitchens, bathrooms, floors and shared surfaces.</p><div className="mt-10"><PriceGrid prices={flatPrices} /></div><BookingLink className="mt-8" label="Check flat availability" /></div>
+              <div><p className="text-xs font-bold uppercase text-primary">Flat deep cleaning</p><h2 className="mt-4 text-4xl font-extrabold leading-tight md:text-6xl">Made for your apartment.</h2><p className="mt-6 max-w-lg text-lg leading-8 text-muted-foreground">The team handles complete home deep cleaning across bedrooms, living rooms, kitchens, bathrooms, floors and shared surfaces.</p><div className="mt-10"><PriceGrid prices={flatPrices} /></div><BookingLink className="mt-8" label="Check flat availability" onClick={() => openBooking(propertyTypes[0])} /></div>
               <div className="grid grid-cols-2 gap-3"><img src={kitchenImage} alt="Kitchen cleaning in an Ahmedabad apartment" width={1408} height={1008} loading="lazy" className="mt-16 aspect-[3/4] h-full max-h-[560px] w-full object-cover" /><img src={heroImage} alt="Freshly cleaned apartment living room" width={1600} height={1008} loading="lazy" className="aspect-[3/4] h-full max-h-[560px] w-full object-cover" /></div>
             </div>
           </div>
@@ -834,20 +905,20 @@ function HomePage() {
         </section>
 
         <section className="py-20 md:py-28">
-          <div className="mx-auto grid max-w-[1100px] gap-10 px-5 md:px-10 lg:grid-cols-[0.7fr_1.3fr]"><div><p className="text-xs font-bold uppercase text-muted-foreground">Common questions</p><h2 className="mt-4 text-4xl font-extrabold">Straight answers.</h2></div><Accordion type="single" collapsible className="border-t border-foreground">{faqs.map(([question, answer], i) => <AccordionItem value={`faq-${i}`} key={question}><AccordionTrigger className="py-6 text-left text-base font-bold hover:no-underline md:text-lg">{question}</AccordionTrigger><AccordionContent className="max-w-2xl pb-6 text-base leading-7 text-muted-foreground">{answer}</AccordionContent></AccordionItem>)}</Accordion></div>
+          <div className="mx-auto grid max-w-[1100px] gap-10 px-5 md:px-10 lg:grid-cols-[0.7fr_1.3fr] lg:items-center"><div><p className="text-xs font-bold uppercase text-muted-foreground">Common questions</p><h2 className="mt-4 text-4xl font-extrabold">Straight answers.</h2></div><Accordion type="single" collapsible className="border-t border-foreground">{faqs.map(([question, answer], i) => <AccordionItem value={`faq-${i}`} key={question}><AccordionTrigger className="py-6 text-left text-base font-bold hover:no-underline md:text-lg">{question}</AccordionTrigger><AccordionContent className="max-w-2xl pb-6 text-base leading-7 text-muted-foreground">{answer}</AccordionContent></AccordionItem>)}</Accordion></div>
         </section>
 
         <section id="contact" className="relative overflow-hidden bg-secondary text-secondary-foreground">
           <img src={heroImage} alt="Clean modern home in Ahmedabad" width={1600} height={1008} loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-25" />
           <div className="absolute inset-0 bg-secondary/80" />
           <div className="relative mx-auto max-w-[1312px] px-5 py-20 md:px-10 md:py-28 lg:px-16">
-            <div className="max-w-3xl"><p className="text-xs font-bold uppercase text-primary">Ready for a cleaner home?</p><h2 className="mt-4 text-5xl font-extrabold leading-tight md:text-7xl">Tell us your home size and location.</h2><p className="mt-6 max-w-xl text-lg leading-8 text-secondary-foreground/70">We’ll help you choose the right flat, bungalow or specialized cleaning service.</p><div className="mt-8 flex flex-col gap-3 sm:flex-row"><BookingLink label="Book on WhatsApp" /><Button size="lg" variant="outline" disabled className="border-secondary-foreground/35 text-secondary-foreground"><Phone /> Phone number coming soon</Button></div><p className="mt-5 text-xs text-secondary-foreground/55">WhatsApp and phone numbers have not yet been provided. They will be activated here once confirmed.</p></div>
+            <div className="max-w-3xl"><p className="text-xs font-bold uppercase text-primary">Ready for a cleaner home?</p><h2 className="mt-4 text-5xl font-extrabold leading-tight md:text-7xl">Tell us your home size and location.</h2><p className="mt-6 max-w-xl text-lg leading-8 text-secondary-foreground/70">We’ll help you choose the right flat, bungalow or specialized cleaning service.</p><div className="mt-8 flex flex-col gap-3 sm:flex-row"><BookingLink label="Book on WhatsApp" onClick={() => openBooking()} /><Button size="lg" variant="outline" disabled className="border-secondary-foreground/35 text-secondary-foreground"><Phone /> Phone number coming soon</Button></div><p className="mt-5 text-xs text-secondary-foreground/55">WhatsApp and phone numbers have not yet been provided. They will be activated here once confirmed.</p></div>
           </div>
         </section>
       </main>
 
       <footer className="bg-secondary px-5 pb-24 pt-16 text-secondary-foreground md:px-10 md:pb-10 lg:px-16">
-        <div className="mx-auto max-w-[1312px]"><div className="grid gap-12 border-b border-secondary-foreground/20 pb-12 md:grid-cols-3"><div><div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-sm bg-primary text-primary-foreground"><Sparkles className="size-5" /></span><span className="text-sm font-extrabold uppercase">Home Cleaning<br /><span className="font-medium text-secondary-foreground/55">Ahmedabad</span></span></div></div><nav className="grid grid-cols-2 gap-3 text-sm" aria-label="Footer navigation"><a href="#top">Home</a><a href="#services">Services</a><a href="#pricing">Pricing</a><a href="#results">Before & After</a><a href="#about">Why us</a><a href="#contact">Contact</a></nav><address className="not-italic"><p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase text-primary"><MapPin className="size-4" /> Office</p><p className="text-sm leading-6 text-secondary-foreground/70">A/17 Mahashakti Nagar,<br />Chanakyapuri, Ghatlodiya,<br />Ahmedabad – 380061</p></address></div><div className="flex flex-col gap-3 pt-6 text-xs text-secondary-foreground/45 md:flex-row md:justify-between"><p>© 2026 Home Cleaning Ahmedabad</p><p>Contact numbers, business hours, Privacy Policy and Terms to be added when provided.</p></div></div>
+        <div className="mx-auto max-w-[1312px]"><div className="grid gap-12 border-b border-secondary-foreground/20 pb-12 md:grid-cols-3"><div><span className="text-lg font-extrabold uppercase tracking-tight">Clean &amp; Care</span></div><nav className="grid grid-cols-2 gap-3 text-sm" aria-label="Footer navigation"><a href="#top">Home</a><a href="#services">Services</a><a href="#pricing">Pricing</a><a href="#results">Before & After</a><a href="#about">Why us</a><a href="#contact">Contact</a></nav><address className="not-italic"><p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase text-primary"><MapPin className="size-4" /> Office</p><p className="text-sm leading-6 text-secondary-foreground/70">A/17 Mahashakti Nagar,<br />Chanakyapuri, Ghatlodiya,<br />Ahmedabad – 380061</p></address></div><div className="flex flex-col gap-3 pt-6 text-xs text-secondary-foreground/45 md:flex-row md:justify-between"><p>© 2026 Home Cleaning Ahmedabad</p><p>Contact numbers, business hours, Privacy Policy and Terms to be added when provided.</p></div></div>
       </footer>
     </div>
   );
