@@ -28,7 +28,7 @@ Build a mobile-first, WhatsApp-led website that immediately communicates profess
 Generate a cohesive set of realistic Indian-modern residential cleaning images: a bright premium apartment, a spacious bungalow, active professional cleaning, and matched before/after room transformations. Keep each image in a replaceable content structure and label temporary transformation imagery clearly so it is never presented as customer proof.
 
 ## Conversion and mobile behavior
-- Reuse one primary “Book on WhatsApp” action and one secondary “Call now” action.
+- Reuse one primary “Book now” action and one secondary “Call now” action.
 - Preserve incoming UTM parameters and expose consistent click hooks/data attributes for future Google Analytics, Google Ads, and Meta Pixel tracking.
 - Add a compact sticky mobile WhatsApp/call bar, readable pricing tables, touch-friendly controls, and no horizontal overflow.
 - Since no WhatsApp or phone number was provided, show honest contact placeholders and keep phone/WhatsApp actions non-misleading until real numbers are supplied.

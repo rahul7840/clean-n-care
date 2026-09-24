@@ -50,13 +50,6 @@ import sofaImage from "@/assets/sofa-cleaning.jpg";
 import carpetImage from "@/assets/carpet-cleaning.jpg";
 import mattressImage from "@/assets/mattress-cleaning.jpg";
 
-const flatPrices = [
-  ["1 BHK", "₹2,499"],
-  ["2 BHK", "₹3,999"],
-  ["3 BHK", "₹5,999"],
-  ["4 BHK", "₹8,500"],
-];
-
 type PropertyType = {
   id: string;
   tag: string;
@@ -78,7 +71,7 @@ const propertyTypes: PropertyType[] = [
   {
     id: "bungalow",
     tag: "02 / Bungalow cleaning",
-    label: "Bungalows & Larger Homes",
+    label: "Bungalows",
     blurb: "Separate packages built for the scale and spaces of larger homes.",
     image: bungalowImage,
     prices: { "1 BHK": 4999, "2 BHK": 7999, "3 BHK": 13499, "4 BHK": 15499, "5 BHK": 18999 },
@@ -86,7 +79,7 @@ const propertyTypes: PropertyType[] = [
   {
     id: "villa",
     tag: "03 / Villa cleaning",
-    label: "Villas & Duplex Homes",
+    label: "Villas",
     blurb: "Multi-floor cleaning for villas, duplexes and independent houses.",
     image: sofaImage,
     prices: { "1 BHK": 5999, "2 BHK": 8999, "3 BHK": 14999, "4 BHK": 17999, "5 BHK": 20999 },
@@ -94,7 +87,7 @@ const propertyTypes: PropertyType[] = [
   {
     id: "premium",
     tag: "04 / Premium cleaning",
-    label: "Premium & Luxury Homes",
+    label: "Luxury Homes",
     blurb: "Detail-led deep cleaning for premium finishes and larger layouts.",
     image: carpetImage,
     prices: { "1 BHK": 6999, "2 BHK": 9999, "3 BHK": 16499, "4 BHK": 19499, "5 BHK": 22999 },
@@ -113,6 +106,8 @@ const heroStats = [
 ];
 
 const CONTACT_WHATSAPP_NUMBER = "919913375386";
+const CONTACT_PHONE_TEL = "+919913375386";
+const CONTACT_PHONE_DISPLAY = "+91 99133 75386";
 
 function formatInr(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
@@ -199,7 +194,7 @@ const faqs = [
   ["Do you clean bungalows?", "Yes. Bungalow cleaning packages are available based on home size, from 1 BHK to 4 BHK."],
   ["Do you provide sofa cleaning?", "Yes. Sofa shampoo cleaning starts from ₹999."],
   ["Do you provide kitchen cleaning?", "Yes. Kitchen cleaning starts from ₹799."],
-  ["How can I book?", "Contact the team through WhatsApp or phone. The booking numbers will be added here once confirmed."],
+  ["How can I book?", `Book online, on WhatsApp, or call us directly at ${CONTACT_PHONE_DISPLAY}.`],
 ];
 
 const localBusinessSchema = {
@@ -246,7 +241,7 @@ function trackClick(action: string, detail: Record<string, unknown> = {}) {
 
 function BookingLink({
   className = "",
-  label = "Book on WhatsApp",
+  label = "Book now",
   shine = false,
   onClick,
 }: {
@@ -259,27 +254,15 @@ function BookingLink({
     <Button
       type="button"
       size="lg"
-      className={shine ? `bg-foreground text-background hover:bg-foreground/88 ${className}` : className}
+      className={shine ? `bg-background text-foreground hover:bg-background/88 ${className}` : className}
       onClick={() => {
         trackClick("whatsapp_click");
         onClick();
       }}
     >
-      <MessageCircle aria-hidden="true" /> <span className={shine ? "text-shine" : ""}>{label}</span>
+      <MessageCircle aria-hidden="true" className={shine ? "text-foreground" : ""} />{" "}
+      <span className={shine ? "text-shine-dark" : ""}>{label}</span>
     </Button>
-  );
-}
-
-function PriceGrid({ prices, dark = false }: { prices: string[][]; dark?: boolean }) {
-  return (
-    <div className={`grid grid-cols-2 border-t md:grid-cols-4 ${dark ? "border-background/20" : "border-border"}`}>
-      {prices.map(([size, price], index) => (
-        <div key={size} className={`py-5 pr-3 md:py-7 ${index % 2 ? "border-l" : ""} ${index > 1 ? "border-t md:border-t-0" : ""} ${dark ? "border-background/20" : "border-border"} md:border-l md:first:border-l-0 md:pl-6`}>
-          <p className={`text-xs font-bold uppercase ${dark ? "text-background/60" : "text-muted-foreground"}`}>{size}</p>
-          <p className={`mt-2 text-2xl font-extrabold md:text-3xl ${dark ? "text-primary" : "text-foreground"}`}>{price}</p>
-        </div>
-      ))}
-    </div>
   );
 }
 
@@ -645,46 +628,48 @@ function PricingCarousel({
   }, [api]);
 
   return (
-    <section id="pricing" className="relative bg-secondary text-secondary-foreground">
-      <Carousel setApi={setApi} opts={{ loop: true }} className="w-full">
-        <CarouselContent className="ml-0">
-          {types.map((type, index) => {
-            const minPrice = Math.min(...Object.values(type.prices));
-            return (
-              <CarouselItem key={type.id} className="pl-0">
-                <button
-                  type="button"
-                  onClick={() => onSelect(type)}
-                  className="group relative block h-[560px] w-full overflow-hidden text-left md:h-[680px]"
-                >
-                  <img
-                    src={type.image}
-                    alt={type.label}
-                    loading={index === 0 ? "eager" : "lazy"}
-                    width={1600}
-                    height={1008}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                  />
-                  <div className="absolute inset-0 bg-secondary/60" />
-                  <div className="relative mx-auto flex h-full max-w-[1440px] flex-col items-center justify-center px-5 py-16 text-center md:px-10 lg:px-16">
-                    <span className="text-xs font-bold uppercase text-background/70">{type.tag}</span>
-                    <h3 className="mt-3 max-w-2xl text-5xl font-extrabold leading-[0.98] md:text-7xl">{type.label}</h3>
-                    <p className="mt-5 max-w-lg text-base leading-7 text-secondary-foreground/75 md:text-lg">{type.blurb}</p>
-                    <p className="mt-7 flex items-center gap-2 text-2xl font-extrabold md:text-3xl">
-                      <span className="text-shine">From {formatInr(minPrice)}</span>
-                      <ArrowRight className="size-6 text-background transition-transform group-hover:translate-x-1" />
-                    </p>
-                  </div>
-                </button>
-              </CarouselItem>
-            );
-          })}
-        </CarouselContent>
-        <div className="absolute inset-x-0 bottom-8 flex justify-center gap-2 px-5 md:justify-end md:px-10 lg:px-16">
-          <CarouselPrevious variant="ghost" className="static size-11 translate-y-0 rounded-none border-none bg-transparent text-background hover:bg-background/10 hover:text-background" />
-          <CarouselNext variant="ghost" className="static size-11 translate-y-0 rounded-none border-none bg-transparent text-background hover:bg-background/10 hover:text-background" />
-        </div>
-      </Carousel>
+    <section id="pricing" className="bg-background px-5 py-16 md:px-10 md:py-20 lg:px-16">
+      <div className="mx-auto max-w-[1312px]">
+        <Carousel setApi={setApi} opts={{ loop: true }} className="relative w-full">
+          <CarouselContent className="ml-0">
+            {types.map((type, index) => {
+              const minPrice = Math.min(...Object.values(type.prices));
+              return (
+                <CarouselItem key={type.id} className="pl-0">
+                  <button
+                    type="button"
+                    onClick={() => onSelect(type)}
+                    className="group relative block h-[340px] w-full overflow-hidden rounded-2xl text-left sm:h-[400px] md:h-[460px]"
+                  >
+                    <img
+                      src={type.image}
+                      alt={type.label}
+                      loading={index === 0 ? "eager" : "lazy"}
+                      width={1600}
+                      height={1008}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                    />
+                    <div className="absolute inset-0 bg-secondary/60" />
+                    <div className="relative flex h-full flex-col items-center justify-center px-5 py-10 text-center text-secondary-foreground md:px-10">
+                      <span className="text-xs font-bold uppercase text-background/70">{type.tag}</span>
+                      <h3 className="mt-3 max-w-2xl text-3xl font-extrabold leading-[0.98] md:text-5xl">{type.label}</h3>
+                      <p className="mt-4 max-w-lg text-sm leading-6 text-secondary-foreground/75 md:text-base">{type.blurb}</p>
+                      <p className="mt-5 flex items-center gap-2 text-xl font-extrabold md:text-2xl">
+                        <span className="text-shine">From {formatInr(minPrice)}</span>
+                        <ArrowRight className="size-5 text-background transition-transform group-hover:translate-x-1" />
+                      </p>
+                    </div>
+                  </button>
+                </CarouselItem>
+              );
+            })}
+          </CarouselContent>
+          <div className="mt-5 flex justify-end gap-2">
+            <CarouselPrevious variant="outline" className="static size-11 translate-y-0 rounded-none border-border bg-transparent text-foreground" />
+            <CarouselNext variant="outline" className="static size-11 translate-y-0 rounded-none border-border bg-transparent text-foreground" />
+          </div>
+        </Carousel>
+      </div>
     </section>
   );
 }
@@ -808,7 +793,6 @@ function HomePage() {
             <a className="transition-colors hover:text-primary" href="#about">Why us</a>
             <a className="transition-colors hover:text-primary" href="#contact">Contact</a>
           </nav>
-          <BookingLink className="hidden md:inline-flex" onClick={() => openBooking()} />
           <a href="#pricing" className="flex size-10 items-center justify-center border border-background/40 md:hidden" aria-label="View pricing"><ArrowDownRight /></a>
         </div>
       </header>
@@ -825,7 +809,7 @@ function HomePage() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <BookingLink shine onClick={() => openBooking()} />
                 <Button asChild size="lg" variant="outline" className="border-secondary-foreground/45 text-secondary-foreground hover:bg-background hover:text-foreground">
-                  <a href="#contact" data-track="phone_click" onClick={() => trackClick("phone_click")}><Phone /> Call now</a>
+                  <a href={`tel:${CONTACT_PHONE_TEL}`} data-track="phone_click" onClick={() => trackClick("phone_click")}><Phone /> Call now</a>
                 </Button>
               </div>
             </div>
@@ -878,15 +862,6 @@ function HomePage() {
           </div>
         </section>
 
-        <section className="py-20 md:py-28">
-          <div className="mx-auto max-w-[1312px] px-5 md:px-10 lg:px-16">
-            <div className="grid gap-10 lg:grid-cols-2 lg:gap-20">
-              <div><p className="text-xs font-bold uppercase text-primary">Flat deep cleaning</p><h2 className="mt-4 text-4xl font-extrabold leading-tight md:text-6xl">Made for your apartment.</h2><p className="mt-6 max-w-lg text-lg leading-8 text-muted-foreground">The team handles complete home deep cleaning across bedrooms, living rooms, kitchens, bathrooms, floors and shared surfaces.</p><div className="mt-10"><PriceGrid prices={flatPrices} /></div><BookingLink className="mt-8" label="Check flat availability" onClick={() => openBooking(propertyTypes[0])} /></div>
-              <div className="grid grid-cols-2 gap-3"><img src={kitchenImage} alt="Kitchen cleaning in an Ahmedabad apartment" width={1408} height={1008} loading="lazy" className="mt-16 aspect-[3/4] h-full max-h-[560px] w-full object-cover" /><img src={heroImage} alt="Freshly cleaned apartment living room" width={1600} height={1008} loading="lazy" className="aspect-[3/4] h-full max-h-[560px] w-full object-cover" /></div>
-            </div>
-          </div>
-        </section>
-
         <section id="results" className="py-20 md:py-28">
           <div className="mx-auto max-w-[1312px] px-5 md:px-10 lg:px-16">
             <div className="grid items-end gap-6 md:grid-cols-2"><div><p className="text-xs font-bold uppercase text-muted-foreground">See the difference</p><h2 className="mt-4 text-4xl font-extrabold leading-tight md:text-6xl">Before. After.<br />Clearly cleaner.</h2></div><p className="max-w-lg justify-self-end text-sm leading-6 text-muted-foreground">The images below show the type of cleaning work offered. Replace them with verified customer project photographs when available.</p></div>
@@ -912,13 +887,13 @@ function HomePage() {
           <img src={heroImage} alt="Clean modern home in Ahmedabad" width={1600} height={1008} loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-25" />
           <div className="absolute inset-0 bg-secondary/80" />
           <div className="relative mx-auto max-w-[1312px] px-5 py-20 md:px-10 md:py-28 lg:px-16">
-            <div className="max-w-3xl"><p className="text-xs font-bold uppercase text-primary">Ready for a cleaner home?</p><h2 className="mt-4 text-5xl font-extrabold leading-tight md:text-7xl">Tell us your home size and location.</h2><p className="mt-6 max-w-xl text-lg leading-8 text-secondary-foreground/70">We’ll help you choose the right flat, bungalow or specialized cleaning service.</p><div className="mt-8 flex flex-col gap-3 sm:flex-row"><BookingLink label="Book on WhatsApp" onClick={() => openBooking()} /><Button size="lg" variant="outline" disabled className="border-secondary-foreground/35 text-secondary-foreground"><Phone /> Phone number coming soon</Button></div><p className="mt-5 text-xs text-secondary-foreground/55">WhatsApp and phone numbers have not yet been provided. They will be activated here once confirmed.</p></div>
+            <div className="max-w-3xl"><p className="text-xs font-bold uppercase text-primary">Ready for a cleaner home?</p><h2 className="mt-4 text-5xl font-extrabold leading-tight md:text-7xl">Tell us your home size and location.</h2><p className="mt-6 max-w-xl text-lg leading-8 text-secondary-foreground/70">We’ll help you choose the right flat, bungalow or specialized cleaning service.</p><div className="mt-8 flex flex-col gap-3 sm:flex-row"><BookingLink label="Book now" onClick={() => openBooking()} /><Button asChild size="lg" variant="outline" className="border-secondary-foreground/35 text-secondary-foreground"><a href={`tel:${CONTACT_PHONE_TEL}`} data-track="phone_click" onClick={() => trackClick("phone_click")}><Phone /> {CONTACT_PHONE_DISPLAY}</a></Button></div></div>
           </div>
         </section>
       </main>
 
       <footer className="bg-secondary px-5 pb-24 pt-16 text-secondary-foreground md:px-10 md:pb-10 lg:px-16">
-        <div className="mx-auto max-w-[1312px]"><div className="grid gap-12 border-b border-secondary-foreground/20 pb-12 md:grid-cols-3"><div><span className="text-lg font-extrabold uppercase tracking-tight">Clean &amp; Care</span></div><nav className="grid grid-cols-2 gap-3 text-sm" aria-label="Footer navigation"><a href="#top">Home</a><a href="#services">Services</a><a href="#pricing">Pricing</a><a href="#results">Before & After</a><a href="#about">Why us</a><a href="#contact">Contact</a></nav><address className="not-italic"><p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase text-primary"><MapPin className="size-4" /> Office</p><p className="text-sm leading-6 text-secondary-foreground/70">A/17 Mahashakti Nagar,<br />Chanakyapuri, Ghatlodiya,<br />Ahmedabad – 380061</p></address></div><div className="flex flex-col gap-3 pt-6 text-xs text-secondary-foreground/45 md:flex-row md:justify-between"><p>© 2026 Home Cleaning Ahmedabad</p><p>Contact numbers, business hours, Privacy Policy and Terms to be added when provided.</p></div></div>
+        <div className="mx-auto max-w-[1312px]"><div className="grid gap-12 border-b border-secondary-foreground/20 pb-12 md:grid-cols-3"><div><span className="text-lg font-extrabold uppercase tracking-tight">Clean &amp; Care</span></div><nav className="grid grid-cols-2 gap-3 text-sm" aria-label="Footer navigation"><a href="#top">Home</a><a href="#services">Services</a><a href="#pricing">Pricing</a><a href="#results">Before & After</a><a href="#about">Why us</a><a href="#contact">Contact</a></nav><address className="not-italic"><p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase text-primary"><MapPin className="size-4" /> Office</p><p className="text-sm leading-6 text-secondary-foreground/70">A/17 Mahashakti Nagar,<br />Chanakyapuri, Ghatlodiya,<br />Ahmedabad – 380061</p><a href={`tel:${CONTACT_PHONE_TEL}`} onClick={() => trackClick("phone_click")} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-secondary-foreground/70 transition-colors hover:text-background"><Phone className="size-4" /> {CONTACT_PHONE_DISPLAY}</a></address></div><div className="flex flex-col gap-3 pt-6 text-xs text-secondary-foreground/45 md:flex-row md:justify-between"><p>© 2026 Home Cleaning Ahmedabad</p><p>Business hours, Privacy Policy and Terms to be added when provided.</p></div></div>
       </footer>
     </div>
   );
